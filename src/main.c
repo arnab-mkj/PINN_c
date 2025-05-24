@@ -9,6 +9,7 @@
 
 int main(int argc, char*argv[]){
     if (argc<8){
+        fprintf(stderr, "Usage: %s --loss <type> --activation <function> --potential <value> --charge_density <value> --current_density <value> --thermal_conductivity <value> --wave_speed <value> [--epochs <value>] [--learning_rate <value>]\n", argv[0]);
         return EXIT_FAILURE;
     }
 
@@ -30,7 +31,7 @@ int main(int argc, char*argv[]){
             activation_function = argv[++i];
         }else if(strcmp(argv[i], "--potential") == 0 && i+1<argc){
             potential = atof(argv[++i]);
-        }else if(strcmp(argv[i], "--charge_densty") == 0 && i+1<argc){
+        }else if(strcmp(argv[i], "--charge_density") == 0 && i+1<argc){
             charge_density = atof(argv[++i]);
         }else if(strcmp(argv[i], "--current_density") == 0 && i+1<argc){
             current_density = atof(argv[++i]);
@@ -70,8 +71,9 @@ int main(int argc, char*argv[]){
         .thermal_conductivity = thermal_conductivity,
         .wave_speed = wave_speed
     };
-
+    printf("Starting training for %s loss with %s activation (%d epochs, lr=%.4f)\n", loss_type, activation_function, epochs, learning_rate);
     train_neural_network(&nn, loss_type, &params, epochs, learning_rate, activation_function);
+    printf("Training completed.\n");
 
     save_model(&nn, "model_parameters.txt");
 

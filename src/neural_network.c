@@ -224,6 +224,18 @@ static void log_training_data(const char *loss_type, int epoch, double loss, dou
     } else{
         snprintf(log_filename, sizeof(log_filename), "log_%s_%d.txt", loss_type, run_number);
     }
+
+    // Check if file exists by attempting to open it in read mode
+    FILE *file_check = fopen(log_filename, "r");
+    int file_exists = (file_check != NULL);
+    if (file_check) fclose(file_check);
+
+    // If file exists, increment run_number and try again
+    if (file_exists) {
+        run_number++;
+        snprintf(log_filename, sizeof(log_filename), "log_%s_%d.txt", loss_type, run_number);
+    }
+
     FILE *log_file = fopen(log_filename, "a");
     if(log_file){
         fprintf(log_file, "Epoch %d: Loss: %.5f, Validation Loss: %.5f\n", epoch, loss, validation_loss);

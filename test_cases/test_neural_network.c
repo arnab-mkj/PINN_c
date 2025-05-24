@@ -16,10 +16,10 @@ void test_forward_pass() {
     // Initialize neural network
     NeuralNetwork nn;
     initialize_neural_network(&nn);
-    double input[2] = {1.0, 2.0}; // Example input for forward pass
-    double output[1] = {0}; // Output buffer
+    double input[INPUT_SIZE] = {1.0, 2.0}; // Example input for forward pass
+    double output[OUTPUT_SIZE] = {0}; // Output buffer
     forward_pass(&nn, input, output, RELU); // Perform forward pass
-    printf("Forward Pass Output: %f\n", output[0]);
+    printf("Forward Pass Output: %f, %f, %f\n", output[0], output[1], output[2]);
 }
 
 int main() {
