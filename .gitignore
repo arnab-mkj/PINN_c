@@ -19,3 +19,7 @@ build/
 
 # Ignore compiled binaries
 bin/
+
+*.png
+*.txt
+
