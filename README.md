@@ -61,20 +61,20 @@ The neural network `NN(x,t; θ)` (where `θ` represents all weights and biases) 
 The fundamental idea is to train the neural network `NN(x,t; θ)` such that its output, when plugged into the PDE, makes the PDE residual close to zero.
 
 Consider a general PDE:
-\[
+$$
 \mathcal{F}(u, \frac{\partial u}{\partial t}, \frac{\partial u}{\partial x}, \frac{\partial^2 u}{\partial x^2}, \dots; \lambda) = 0 \quad \text{for } (x,t) \in \Omega
-\]
+$$
 where `u(x,t)` is the unknown solution, `λ` represents physical parameters, and `Ω` is the domain.
 
 The PINN approximates `u(x,t)` with `NN(x,t; θ)`. The PDE residual is then:
-\[
+$$
 R(x,t; \theta) = \mathcal{F}(NN, \frac{\partial NN}{\partial t}, \frac{\partial NN}{\partial x}, \frac{\partial^2 NN}{\partial x^2}, \dots; \lambda)
-\]
+$$
 
 The **loss function** for the PDE part is typically the mean squared error of this residual over a set of sampled collocation points `(x_i, t_i)` from the domain `Ω`:
-\[
+$$
 L_{PDE}(\theta) = \frac{1}{N_c} \sum_{i=1}^{N_c} |R(x_i, t_i; \theta)|^2
-\]
+$$
 where `N_c` is the number of collocation points.
 
 **Derivatives**: The derivatives of the neural network output `NN` with respect to its inputs (`x`, `t`) are needed to compute the residual `R`. In this C implementation, these derivatives are approximated using **finite difference methods**. For example:
@@ -100,15 +100,15 @@ As training progresses, the network `NN(x,t; θ)` should evolve to become a good
 ### Example: Solving the 1D Heat Equation
 
 The 1D heat equation is:
-\[
+$$
 \frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2}
-\]
+$$
 where `u(x,t)` is the temperature and `α` is the thermal diffusivity (`α = k / (ρ * c_p)` where `k` is thermal conductivity).
 
 The PDE residual function `R(x,t; θ)` for the neural network `NN(x,t; θ)` is:
-\[
+$$
 R(x,t; \theta) = \frac{\partial NN}{\partial t} - \alpha \frac{\partial^2 NN}{\partial x^2}
-\]
+$$
 
 In `src/loss_functions.c`, `heat_equation_residual` calculates this:
 1.  It takes the current network `nn`, coordinates `(x,t)`, step sizes `dx, dt`, physical parameters `params` (which includes `params->thermal_conductivity`), and the `activation_func`.
@@ -135,7 +135,7 @@ Located in `src/loss_functions.c`. These functions compute the value `R` that sh
 
 #### `schrodinger_equation_residual`
 -   **Equation (Conceptual Target)**: A simplified, real-valued form related to the time-dependent Schrödinger equation `iħ∂ψ/∂t = Hψ`, where `H = (-ħ²/2m)∇² + V`. Due to the complexity of `i` and potentially complex `ψ`, this implementation models a simplified residual.
-    \[ R = \frac{\partial \psi_{NN}}{\partial t} + \frac{1}{\hbar} \left( \frac{-\hbar^2}{2m} \frac{\partial^2 \psi_{NN}}{\partial x^2} + V \psi_{NN} \right) \]
+    $$ R = \frac{\partial \psi_{NN}}{\partial t} + \frac{1}{\hbar} \left( \frac{-\hbar^2}{2m} \frac{\partial^2 \psi_{NN}}{\partial x^2} + V \psi_{NN} \right) $$
     (This is one possible interpretation for a real `ψ` and aiming for `R=0`. A full treatment is more complex.)
 -   **Implementation**:
     -   `ψ_NN` is `nn->output[0]`.
@@ -146,8 +146,8 @@ Located in `src/loss_functions.c`. These functions compute the value `R` that sh
 
 #### `maxwell_equations_residual`
 -   **Equations (1D TE-like mode)**:
-    \[ \frac{\partial E_z}{\partial x} = -\mu_0 \frac{\partial H_y}{\partial t} \implies R_1 = \frac{\partial E_z}{\partial x} + \mu_0 \frac{\partial H_y}{\partial t} \]
-    \[ \frac{\partial H_y}{\partial x} = -\epsilon_0 \frac{\partial E_z}{\partial t} - J_z \implies R_2 = \frac{\partial H_y}{\partial x} + \epsilon_0 \frac{\partial E_z}{\partial t} + J_z \]
+    $$\frac{\partial E_z}{\partial x} = -\mu_0 \frac{\partial H_y}{\partial t} \implies R_1 = \frac{\partial E_z}{\partial x} + \mu_0 \frac{\partial H_y}{\partial t} $$
+    $$ \frac{\partial H_y}{\partial x} = -\epsilon_0 \frac{\partial E_z}{\partial t} - J_z \implies R_2 = \frac{\partial H_y}{\partial x} + \epsilon_0 \frac{\partial E_z}{\partial t} + J_z $$
 -   **Implementation**:
     -   Assumes `NN_output[0]` is `E_z` and `NN_output[1]` is `H_y`.
     -   Derivatives are approximated using forward differences.
@@ -157,7 +157,7 @@ Located in `src/loss_functions.c`. These functions compute the value `R` that sh
 
 #### `heat_equation_residual`
 -   **Equation (1D)**:
-    \[ \frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2} \implies R = \frac{\partial u}{\partial t} - \alpha \frac{\partial^2 u}{\partial x^2} \]
+    $$ \frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2} \implies R = \frac{\partial u}{\partial t} - \alpha \frac{\partial^2 u}{\partial x^2} $$
 -   **Implementation**:
     -   `u_NN` is `nn->output[0]`.
     -   `∂u_NN/∂t` approximated by forward difference.
@@ -166,7 +166,7 @@ Located in `src/loss_functions.c`. These functions compute the value `R` that sh
 
 #### `wave_equation_residual`
 -   **Equation (1D)**:
-    \[ \frac{\partial^2 u}{\partial t^2} = c^2 \frac{\partial^2 u}{\partial x^2} \implies R = \frac{\partial^2 u}{\partial t^2} - c^2 \frac{\partial^2 u}{\partial x^2} \]
+    $$ \frac{\partial^2 u}{\partial t^2} = c^2 \frac{\partial^2 u}{\partial x^2} \implies R = \frac{\partial^2 u}{\partial t^2} - c^2 \frac{\partial^2 u}{\partial x^2} $$
 -   **Implementation**:
     -   `u_NN` is `nn->output[0]`.
     -   `∂²u_NN/∂t²` approximated by central difference.
@@ -265,7 +265,7 @@ These commands assume you are in the root directory of the project where the `pi
 To train the PINN for the 1D Heat Equation using the `tanh` activation function for 20,000 epochs, with a learning rate of 0.001, thermal conductivity of 0.05, `dx=0.02`, `dt=0.005`, and 200 collocation points per epoch:
 
 To train the PINN for the 1D Heat Equation:
-\[ \frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2} \]
+$$ \frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2} $$
 
 ```bash
 ./pinn --loss heat \
@@ -278,13 +278,13 @@ To train the PINN for the 1D Heat Equation:
        --thermal_conductivity 0.05 
 ```
        
-      --dx 0.02: Sets the spatial step for finite differences. \
-      --dt 0.005: Sets the time step for finite differences. \
-      --thermal_conductivity 0.05: Sets the k value (thermal diffusivity α will be derived from this). \
+--dx 0.02: Sets the spatial step for finite differences. \
+--dt 0.005: Sets the time step for finite differences. \
+--thermal_conductivity 0.05: Sets the k value (thermal diffusivity α will be derived from this). 
 
 #### 2. Wave Equation
 To train the PINN for the 1D Wave Equation:
-[ \frac{\partial^2 u}{\partial t^2} = c^2 \frac{\partial^2 u}{\partial x^2} ]
+$ \frac{\partial^2 u}{\partial t^2} = c^2 \frac{\partial^2 u}{\partial x^2} $
 
 ```bash
 ./pinn --loss wave \
@@ -297,13 +297,13 @@ To train the PINN for the 1D Wave Equation:
        --wave_speed 1.2
 ```
 
---dx 0.025: Sets the spatial step.
---dt 0.01: Sets the time step.
---wave_speed 1.2: Sets the wave propagation speed c.
+--dx 0.025: Sets the spatial step. \
+--dt 0.01: Sets the time step. \
+--wave_speed 1.2: Sets the wave propagation speed c. 
 
 #### 3. Schrodinger Equation
 To train the PINN for the simplified, real-valued form related to the Schrödinger Equation:
-(Residual form depends on the specific interpretation, e.g., R = ∂ψ/∂t + (1/ħ) * ((-ħ²/2m)∂²ψ/∂x² + Vψ))
+Residual form depends on the specific interpretation, e.g.,  $ R = ∂ψ/∂t + (1/ħ) * ((-ħ²/2m)∂²ψ/∂x² + Vψ) $
 
 ```bash
 ./pinn --loss schrodinger \
@@ -322,9 +322,9 @@ To train the PINN for the simplified, real-valued form related to the Schröding
 
 
 #### 4. Maxwell's Equation
-To train the PINN for the simplified 1D Maxwell's Equations (e.g., TEz mode with Ez, Hy):
-[ R_1 = \frac{\partial E_z}{\partial x} + \mu_0 \frac{\partial H_y}{\partial t} ]
-[ R_2 = \frac{\partial H_y}{\partial x} + \epsilon_0 \frac{\partial E_z}{\partial t} + J_z ]
+To train the PINN for the simplified 1D Maxwell's Equations (e.g., TEz mode with Ez, Hy): \
+$ R_1 = \frac{\partial E_z}{\partial x} + \mu_0 \frac{\partial H_y}{\partial t} $ \
+$ R_2 = \frac{\partial H_y}{\partial x} + \epsilon_0 \frac{\partial E_z}{\partial t} + J_z $ \
 (The network output NN_output[0] is treated as Ez, NN_output[1] as Hy. OUTPUT_SIZE in neural_network.h must be 2 for this).
 
 ```bash
@@ -342,5 +342,5 @@ To train the PINN for the simplified 1D Maxwell's Equations (e.g., TEz mode with
 --dx 0.015: Sets the spatial step.\
 --dt 0.005: Sets the time step.\
 --current_density 0.1: Sets the current density J_z.\
---charge_density 0.0: Sets the charge density ρ (note: charge_density is parsed but not actively used in the current maxwell_equations_residual for Gauss's law for E-field, which would be another equation to add for a fuller system).\
+--charge_density 0.0: Sets the charge density ρ (note: charge_density is parsed but not actively used in the current maxwell_equations_residual for Gauss's law for E-field, which would be another equation to add for a fuller system).
    
